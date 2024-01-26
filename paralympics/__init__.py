@@ -5,6 +5,9 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 
+import csv
+from pathlib import Path
+
 
 class Base(DeclarativeBase):
     pass
@@ -21,34 +24,6 @@ def create_app(test_config=None):
         # Set the location of the database file called paralympics.sqlite which will be in the app's instance folder
         SQLALCHEMY_DATABASE_URI= "sqlite:///" + os.path.join(app.instance_path, 'paralympics.sqlite'),  
     )
-
-    if test_config is None:
-        # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # load the test config if passed in
-        app.config.from_mapping(test_config)
-
-    # ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-    # Put the following code inside the create_app function after the code to ensure the instance folder exists
-    # This lis likely to be circa line 40.
-    with app.app_context():
-        # Register the routes with the app in the context
-        from paralympics import paralympics
-    return app
-
-
-def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY='l-tirPCf1S44mWAGoWqWlA',
-        SQLALCHEMY_DATABASE_URI="sqlite:///" + os.path.join(app.instance_path, 'paralympics.sqlite'),
-    )
-
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
     else:
@@ -69,20 +44,14 @@ def create_app(test_config=None):
     # create_all does not update tables if they are already in the database.
     with app.app_context():
         db.create_all()
-
-        # Register the routes with the app in the context
-        from paralympics import paralympics
-    
-    with app.app_context():
-        # Create the database and tables if they don't already exist
-        db.create_all()
         # Add the data to the database if not already added
         add_data_from_csv()
-        
+        # Register the routes with the app in the context
+        from paralympics import paralympics
+
     return app
 
-import csv
-from pathlib import Path
+
 
 
 def add_data_from_csv():
